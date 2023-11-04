@@ -11,12 +11,14 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 
-from django.utils.encoding import force_bytes, DjangoUnicodeDecodeError
+from django.utils.encoding import force_bytes, force_str, DjangoUnicodeDecodeError
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from django.urls import reverse
 from .utils import token_generator
+
+from django.contrib import auth
 # Please Check If there is any better way for doing this.
 
 
@@ -87,4 +89,53 @@ class RegistrationView(View):
 
 class VerificationView(View):
     def get(self, request, uidb64, token):
+        try:
+            id = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=id)
+
+            if not token_generator.check_token(user, token):
+                return redirect('login'+'?message='+'User already activated.')
+            
+            if user.is_active:
+                return redirect('login')
+            user.is_active = True
+            user.save()
+
+            messages.success(request, 'Account activated successfully.')
+            return redirect('login')
+        
+        except Exception as ex:
+            pass
+        return redirect('login')
+
+class LoginView(View):
+    def get(self, request):
+        return render(request, 'authentication/login.html')
+    
+    def post(self, request):
+        username = request.POST['username']
+        password = request.POST['password']
+
+        if username and password:
+            user = auth.authenticate(username=username, password=password)
+            if user:
+                if user.is_active:
+                    auth.login(request, user)
+                    messages.success(request, 'Welcome, '+user.username+' you are now logged in.')
+                    return redirect('home')
+
+                messages.error(request, 'Account is not active. Please check your email.')
+                return render(request, 'authentication/login.html')
+            
+            messages.error(request, 'Invalid credentials! Try again.')
+            return render(request, 'authentication/login.html')
+        
+        messages.error(request, 'Please fill all fields')
+        return render(request, 'authentication/login.html')
+    
+
+class LogoutView(View):
+    def post(self, request):
+        auth.logout(request)
+        messages.success(request, 'You have been logged out !')
         return redirect('login')
