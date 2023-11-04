@@ -134,6 +134,13 @@ STATIC_ROOT = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MESSAGE_TAGS={
+MESSAGE_TAGS = {
     messages.ERROR: "danger"
 }
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'mandalkrishna739@gmail.com'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'mandalkrishna739@gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_PASSWORD = 'jlqd auhs euts qwol'
